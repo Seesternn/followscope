@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instagram Follow Analyzer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Background orbs -->
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+
+<div id="app">
+
+  <!-- ── HEADER ──────────────────────────────────────────── -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="20" height="20" rx="6" ry="6"/>
+          <circle cx="12" cy="12" r="4"/>
+          <circle cx="17.5" cy="6.5" r="1" fill="#fff" stroke="none"/>
+        </svg>
+      </div>
+      <span class="logo-text">InstaCheck</span>
+    </div>
+
+    <div class="lang-toggle">
+      <button class="lang-btn active" data-lang="tr" onclick="setLang('tr')">TR</button>
+      <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+    </div>
+  </header>
+
+  <!-- ── HERO ────────────────────────────────────────────── -->
+  <div class="hero">
+    <div class="hero-eyebrow" id="heroEyebrow">Instagram Araçları</div>
+    <h1>
+      <span id="heroTitle1">Takip</span><br>
+      <em id="heroTitle2">Analizi</em>
+    </h1>
+    <p class="hero-sub" id="heroSub">
+      JSON dosyalarını yükle, takipçi durumunu ve ne zaman takip edildiğini görüntüle.
+    </p>
+  </div>
+
+  <!-- ── UPLOAD ───────────────────────────────────────────── -->
+  <div class="upload-grid">
+
+    <div class="drop-zone" id="dropFollowing">
+      <input type="file" id="fileFollowing" accept=".json"
+             onchange="handleFile('following', this)">
+      <div class="drop-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </div>
+      <div class="drop-label" id="dropLabelFollowing">Takip Ettiklerim</div>
+      <div class="drop-hint" id="dropHintFollowing">following.json • seç veya sürükle</div>
+      <div class="drop-filename" id="nameFollowing"></div>
+    </div>
+
+    <div class="drop-zone" id="dropFollowers">
+      <input type="file" id="fileFollowers" accept=".json"
+             onchange="handleFile('followers', this)">
+      <div class="drop-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </div>
+      <div class="drop-label" id="dropLabelFollowers">Takipçilerim</div>
+      <div class="drop-hint" id="dropHintFollowers">followers_1.json • seç veya sürükle</div>
+      <div class="drop-filename" id="nameFollowers"></div>
+    </div>
+
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <button class="btn-analyze" id="analyzeBtn" onclick="analyze()">
+    Analizi Başlat →
+  </button>
+
+  <!-- ── LOADING ───────────────────────────────────────────── -->
+  <div class="loading-state" id="loadingState">
+    <div class="spinner"></div>
+    <span id="loadingText">Analiz ediliyor...</span>
+  </div>
+
+  <!-- ── RESULTS ───────────────────────────────────────────── -->
+  <section id="resultsSection">
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card fade-up">
+        <div class="stat-num purple" id="statFollowing">0</div>
+        <div class="stat-label" id="labelFollowing">Takip Edilen</div>
+      </div>
+      <div class="stat-card fade-up">
+        <div class="stat-num purple" id="statFollowers">0</div>
+        <div class="stat-label" id="labelFollowers">Takipçi</div>
+      </div>
+      <div class="stat-card fade-up">
+        <div class="stat-num red" id="statGhost">0</div>
+        <div class="stat-label" id="labelGhost">Geri Takip Etmeyen</div>
+      </div>
+      <div class="stat-card fade-up">
+        <div class="stat-num blue" id="statFans">0</div>
+        <div class="stat-label" id="labelFans">Karşılıksız Hayran</div>
+      </div>
+    </div>
+
+    <!-- Panels -->
+    <div class="panels-grid">
+
+      <!-- Not following back -->
+      <div class="panel fade-up">
+        <div class="panel-head">
+          <div class="panel-meta">
+            <div class="panel-pill pill-red" id="pillRed">Takip Etmiyorlar</div>
+            <div class="panel-title" id="titleRed">
+              Ben takip ediyorum<br>ama beni etmiyor
+            </div>
+          </div>
+          <div class="panel-big-count count-red" id="unfollowerCount">0</div>
+        </div>
+        <div class="panel-search">
+          <svg viewBox="0 0 20 20" stroke-linecap="round"><circle cx="9" cy="9" r="6"/><path d="M14 14l4 4"/></svg>
+          <input type="text" placeholder="Ara..."
+                 oninput="filterList('unfollowersList', this.value, rawUnfollowers, AV_RED)">
+        </div>
+        <ul class="user-list" id="unfollowersList"></ul>
+      </div>
+
+      <!-- Unreturned fans -->
+      <div class="panel fade-up">
+        <div class="panel-head">
+          <div class="panel-meta">
+            <div class="panel-pill pill-blue" id="pillBlue">Karşılıksız Takip</div>
+            <div class="panel-title" id="titleBlue">
+              O takip ediyor<br>ama ben etmiyorum
+            </div>
+          </div>
+          <div class="panel-big-count count-blue" id="fanCount">0</div>
+        </div>
+        <div class="panel-search">
+          <svg viewBox="0 0 20 20" stroke-linecap="round"><circle cx="9" cy="9" r="6"/><path d="M14 14l4 4"/></svg>
+          <input type="text" placeholder="Ara..."
+                 oninput="filterList('fansList', this.value, rawFans, AV_BLUE)">
+        </div>
+        <ul class="user-list" id="fansList"></ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── FOOTER ────────────────────────────────────────────── -->
+  <footer>
+    <span id="footerPrivacy">
+      Tüm veriler yalnızca tarayıcında işlenir. Hiçbir bilgi dışarıya gönderilmez.
+    </span>
+  </footer>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
